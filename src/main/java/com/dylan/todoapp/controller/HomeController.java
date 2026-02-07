@@ -1,5 +1,8 @@
 package com.dylan.todoapp.controller;
 
+import com.dylan.todoapp.model.Task;
+import com.dylan.todoapp.repository.TaskRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,11 +16,16 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) {
-        // You can pass variables to the HTML here
+        var x = new Task();
+        x.setDescription("Task 1");
+        taskRepository.save(x);
+
         model.addAttribute("appName", "Railway Demo App");
         model.addAttribute("status", status);
-        return "index"; // This refers to index.html in the templates folder
+        return "index";
     }
 
+    @Autowired
+    private TaskRepository taskRepository;
 
 }
