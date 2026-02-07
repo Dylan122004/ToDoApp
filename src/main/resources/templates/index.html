@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Spring Template</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #111; color: white; text-align: center; padding-top: 50px; }
+        .container { border: 1px solid #333; display: inline-block; padding: 20px; border-radius: 10px; }
+        .highlight { color: #00ffd0; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 th:text="${appName}">App Name</h1>
+    <p>Status: <span class="highlight" th:text="${status}">Status</span></p>
+    <p>Served by Thymeleaf on Railway</p>
+</div>
+</body>
+</html>
