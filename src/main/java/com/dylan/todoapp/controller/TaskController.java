@@ -19,10 +19,10 @@ public class TaskController {
     @GetMapping("/")
     public String viewHomePage(Model model, @RequestParam(defaultValue = "0") int page) {
 
-        Pageable pageable = PageRequest.of(page, 10);
+        Pageable pageable = PageRequest.of(page, 5);
         Page<Task> taskPage = taskRepository.findAll(pageable);
 
-        model.addAttribute("listTasks", taskPage.getContent()); // The 10 tasks for this page
+        model.addAttribute("listTasks", taskPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", taskPage.getTotalPages());
         model.addAttribute("newTask", new Task());
