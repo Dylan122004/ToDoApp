@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager Pro</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-accent: #bb86fc;
+            --done-color: #03dac6;
+            --error-color: #cf6679;
+            --text-main: #e0e0e0;
+            --text-dim: #a0a0a0;
+            --input-bg: #2c2c2c;
+            --nav-height: 70px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background-color: var(--surface-color);
+            height: var(--nav-height);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo { font-weight: 800; color: var(--primary-accent); text-decoration: none; font-size: 1.2rem; }
+        .nav-right-side { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+        .nav-link:hover { color: white; }
+
+        .btn-logout-nav {
+            background: transparent; border: 1px solid var(--primary-accent);
+            color: var(--primary-accent); padding: 8px 16px; border-radius: 6px;
+            cursor: pointer; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-logout-nav:hover { background: var(--primary-accent); color: #121212; }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            height: fit-content; /* Important to prevent stretching */
+        }
+
+        h1 { margin-bottom: 1.5rem; font-weight: 700; letter-spacing: -1px; }
+        .input-group { display: flex; gap: 12px; margin-bottom: 5px; }
+        .input-wrapper { flex-grow: 1; display: flex; flex-direction: column; }
+        input[type="text"] {
+            background: var(--input-bg); border: 1px solid #444; color: white;
+            padding: 14px; border-radius: 8px; font-size: 1rem; outline: none;
+        }
+        .char-count { font-size: 0.75rem; color: var(--text-dim); text-align: right; margin: 5px 0 25px 0; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { text-align: left; color: var(--text-dim); text-transform: uppercase; font-size: 0.8rem; padding: 12px; border-bottom: 2px solid #333; }
+        td { padding: 16px 12px; border-bottom: 1px solid #2a2a2a; }
+        .completed-text { text-decoration: line-through; color: var(--text-dim); font-style: italic; }
+        .status-done { color: var(--done-color); font-weight: 800; font-size: 0.85rem; }
+        .status-pending { color: var(--primary-accent); font-weight: 800; font-size: 0.85rem; }
+        button { cursor: pointer; border-radius: 8px; border: none; padding: 10px 18px; font-weight: 600; transition: all 0.2s ease; }
+        .btn-add { background: var(--primary-accent); color: #000; height: 50px; }
+        .btn-complete { background: var(--done-color); color: #000; }
+        .btn-undo { background: #333; color: #fff; }
+        .btn-delete { background: transparent; color: var(--error-color); }
+        .btn-clear { background: var(--error-color); color: white; margin-top: 20px; width: 100%; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; color: var(--text-dim); }
+        .btn-page { background: #2a2a2a; color: white; padding: 8px 14px; }
+
+        #loader-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85);
+            z-index: 9999; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 45px; height: 45px; border: 4px solid #333;
+            border-top: 4px solid var(--primary-accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div id="loader-overlay">
+    <div class="spinner"></div>
+    <p style="margin-top: 15px; color: var(--primary-accent); font-weight: 600;">Updating Tasks...</p>
+</div>
+
+<nav class="top-bar">
+    <a th:href="@{/}" class="logo">Task Manager Pro</a>
+
+    <div class="nav-right-side">
+        <a th:href="@{/}" class="nav-link">Home</a>
+        <a th:href="@{/debug/tokens}" class="nav-link">Debug Tokens</a>
+        <a th:href="@{/admin/manage-users}"
+           class="nav-link"
+           sec:authorize="hasRole('Admin')">Admin Roles</a>
+
+        <a th:href="@{/unprotected/task}" class="nav-link" sec:authorize="hasRole('User')">My Tasks</a>
+
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn-logout-nav">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="main-content">
+    <div class="container">
+        <h1>Tasks</h1>
+
+        <form th:action="@{/unprotected/saveTask}" th:object="${newTask}" method="POST">
+            <div class="input-group">
+                <div class="input-wrapper">
+                    <input type="text" th:field="*{description}"
+                           placeholder="Enter a task (max 50 chars)..."
+                           maxlength="50" id="taskInput" oninput="updateCount(this)" required>
+                </div>
+                <button type="submit" class="btn-add">Add</button>
+            </div>
+            <div id="counter" class="char-count">0 / 50</div>
+        </form>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Task</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="task : ${listTasks}">
+                <td th:class="${task.completed} ? 'completed-text' : ''" th:text="${task.description}"></td>
+                <td>
+                        <span th:class="${task.completed} ? 'status-done' : 'status-pending'"
+                              th:text="${task.completed} ? '✓ DONE' : '○ PENDING'">
+                        </span>
+                </td>
+                <td style="display: flex; gap: 8px;">
+                    <a th:href="@{/unprotected/toggleTask/{id}(id=${task.id})}" class="action-link">
+                        <button th:class="${task.completed} ? 'btn-undo' : 'btn-complete'"
+                                th:text="${task.completed} ? 'Undo' : 'Complete'">
+                        </button>
+                    </a>
+                    <a th:href="@{/unprotected/deleteTask/{id}(id=${task.id})}" class="action-link">
+                        <button class="btn-delete">Delete</button>
+                    </a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="pagination" th:if="${totalPages > 1}">
+            <a th:href="@{/unprotected/task(page=${currentPage - 1})}" th:if="${currentPage > 0}" class="action-link">
+                <button class="btn-page">&laquo; Prev</button>
+            </a>
+            <span th:text="'Page ' + (${currentPage} + 1) + ' of ' + ${totalPages}"></span>
+            <a th:href="@{/unprotected/task(page=${currentPage + 1})}" th:if="${currentPage < totalPages - 1}" class="action-link">
+                <button class="btn-page">Next &raquo;</button>
+            </a>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(listTasks)}">
+            <form th:action="@{/unprotected/clearTasks}" method="POST" onsubmit="return confirm('Delete all tasks permanently?')">
+                <button type="submit" class="btn-clear">Clear All Tasks</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLoader() { document.getElementById('loader-overlay').style.display = 'flex'; }
+    document.querySelectorAll('form').forEach(f => f.addEventListener('submit', showLoader));
+    document.querySelectorAll('.action-link').forEach(l => {
+        l.addEventListener('click', () => { if(l.getAttribute('href') !== "#") showLoader(); });
+    });
+    function updateCount(input) {
+        const counter = document.getElementById('counter');
+        counter.innerText = `${input.value.length} / 50`;
+        counter.style.color = input.value.length >= 50 ? 'var(--error-color)' : 'var(--text-dim)';
+    }
+</script>
+</body>
+</html>

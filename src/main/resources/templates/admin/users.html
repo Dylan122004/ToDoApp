@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - User Management</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-accent: #bb86fc;
+            --secondary-accent: #03dac6;
+            --error-color: #cf6679;
+            --text-main: #e0e0e0;
+            --text-dim: #a0a0a0;
+            --input-bg: #2c2c2c;
+            --nav-height: 70px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background-color: var(--surface-color);
+            height: var(--nav-height);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo { font-weight: 800; color: var(--primary-accent); text-decoration: none; font-size: 1.2rem; }
+        .nav-right-side { display: flex; align-items: center; gap: 20px; }
+        .nav-link { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: color 0.3s; }
+        .nav-link:hover { color: white; }
+
+        .btn-logout-nav {
+            background: transparent; border: 1px solid var(--primary-accent);
+            color: var(--primary-accent); padding: 8px 16px; border-radius: 6px;
+            cursor: pointer; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-logout-nav:hover { background: var(--primary-accent); color: #121212; }
+
+        /* --- ADMIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+
+        h1 { margin-bottom: 1.5rem; font-weight: 700; letter-spacing: -1px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; color: var(--text-dim); text-transform: uppercase; font-size: 0.8rem; padding: 12px; border-bottom: 2px solid #333; }
+        td { padding: 16px 12px; border-bottom: 1px solid #2a2a2a; }
+
+        select {
+            background: var(--input-bg);
+            border: 1px solid #444;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        .btn-update {
+            background: var(--secondary-accent);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-update:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .alert-success { background: rgba(3, 218, 198, 0.1); color: var(--secondary-accent); border: 1px solid var(--secondary-accent); }
+        .alert-error { background: rgba(207, 102, 121, 0.1); color: var(--error-color); border: 1px solid var(--error-color); }
+    </style>
+</head>
+<body>
+
+<nav class="top-bar">
+    <a th:href="@{/}" class="logo">Task Manager Pro</a>
+
+    <div class="nav-right-side">
+        <a th:href="@{/}" class="nav-link">Home</a>
+        <a th:href="@{/debug/tokens}" class="nav-link">Debug Tokens</a>
+        <a th:href="@{/admin/manage-users}"
+           class="nav-link"
+           sec:authorize="hasRole('Admin')">Admin Roles</a>
+
+        <a th:href="@{/unprotected/task}" class="nav-link" sec:authorize="hasRole('User')">My Tasks</a>
+
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn-logout-nav">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="main-content">
+    <div class="container">
+        <h1>Manage User Roles</h1>
+
+        <div th:if="${param.success}" class="alert alert-success">Role updated successfully!</div>
+        <div th:if="${param.error}" class="alert alert-error">Failed to update role.</div>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Email</th>
+                <th>Assign New Role</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="user : ${users}">
+                <td th:text="${user.email}">user@example.com</td>
+                <td>
+                    <form th:action="@{/admin/assign-role}" method="post" style="display: flex; gap: 10px; align-items: center;">
+                        <input type="hidden" name="userId" th:value="${user.getId()}"/>
+                        <select name="roleName">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <button type="submit" class="btn-update">Update</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

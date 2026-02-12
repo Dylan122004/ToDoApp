@@ -11,12 +11,13 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 @Controller
+@RequestMapping("/unprotected")
 public class TaskController {
 
     @Autowired
     private TaskRepository taskRepository;
 
-    @GetMapping("/")
+    @GetMapping("/task")
     public String viewHomePage(Model model, @RequestParam(defaultValue = "0") int page) {
 
         Pageable pageable = PageRequest.of(page, 5);
@@ -27,13 +28,13 @@ public class TaskController {
         model.addAttribute("totalPages", taskPage.getTotalPages());
         model.addAttribute("newTask", new Task());
 
-        return "index";
+        return "unprotected/task";
     }
 
     @PostMapping("/saveTask")
     public String saveTask(@ModelAttribute("newTask") Task task) {
         taskRepository.save(task);
-        return "redirect:/";
+        return "redirect:task";
     }
 
     @GetMapping("/toggleTask/{id}")
@@ -41,18 +42,18 @@ public class TaskController {
         Task task = taskRepository.findById(id).get();
         task.setCompleted(!task.isCompleted());
         taskRepository.save(task);
-        return "redirect:/";
+        return "redirect:/unprotected/task";
     }
 
     @GetMapping("/deleteTask/{id}")
     public String deleteTask(@PathVariable(value = "id") Long id) {
         taskRepository.deleteById(id);
-        return "redirect:/";
+        return "redirect:/unprotected/task";
     }
 
     @PostMapping("/clearTasks")
     public String clearTasks() {
         taskRepository.deleteAll();
-        return "redirect:/";
+        return "redirect:task";
     }
 }
